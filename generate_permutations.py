@@ -1,3 +1,4 @@
+# IGNORE THIS DOCUMENT:  it can be deleted
 # Part of the building process
 # Asks for user input (courses and availability), then generates possible combinations
 # This does not work quite right:  do not incorporate co-reqs and does not respect user's time availability
