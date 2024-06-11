@@ -1,3 +1,5 @@
+# similar to main.py in function, but the code itself could be different
+# times different functions to identify the bottleneck
 import sqlite3
 from datetime import datetime
 from itertools import permutations
