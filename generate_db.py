@@ -106,6 +106,13 @@ def import_to_sqlite(df, db_name):
         conn = sqlite3.connect(db_name)
         df.to_sql('schedule', conn, if_exists='replace', index=False)
         cursor = conn.cursor()
+
+        # Adding indexes
+        cursor.execute("CREATE INDEX idx_course_name ON schedule (Course_Name)")
+        cursor.execute("CREATE INDEX idx_name ON schedule (Name)")
+        cursor.execute("CREATE INDEX idx_status ON schedule (Status)")
+        cursor.execute("CREATE INDEX idx_avail_seats ON schedule (Avail_Seats)")
+        
         cursor.execute("PRAGMA table_info(schedule)")
         columns_info = cursor.fetchall()
         for column in columns_info:
