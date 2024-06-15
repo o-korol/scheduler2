@@ -25,6 +25,8 @@ def clean_column_names(df):
     return df
 
 def adjust_data_types(df):
+    # 'Name' is the section identifier (e.g., ENG-103-101), not the course identifier (e.g., ENG-103)
+    # Course identifier is 'Course_Name'
     string_columns = [
         'Sub', 'Term', 'Dept', 'Name', 'Short_Title', 'Status', 'Mtg_Days', 'STime', 'ETime',
         'Faculty_First', 'Faculty_Last', 'Petition_Y_N', 'Printed_Comments', 'Method', 'Type',
@@ -49,12 +51,14 @@ def handle_multiple_entries(df):
     return df
 
 def extract_course_name(name):
+    '''Extract course identifier (e.g., ENG-103) from section identifier (e.g., ENG-103-101)'''
     parts = name.split('-')
     if len(parts) >= 2:
         return '-'.join(parts[:2])
     return name
 
 def extract_corequisites(comments):
+    '''The info about co-reqs is contained in the Printed Comments column & always follows the same format ("C/co-requisite:  X, Y, Z."). '''
     if pd.isna(comments):
         return ''
     coreq_match = re.search(r'Co-requisite:\s*([\w\d\s,or-]+)', comments, re.IGNORECASE)
@@ -72,13 +76,19 @@ def extract_corequisites(comments):
             coreqs.append(new_coreq)
     return ', '.join(coreqs)
 
-def extract_ptech_sentence(comments):
+def extract_only_sentence(comments):
+    ''' Identify sections restricted to specific populations (PTECH students, students in specific online programs, etc) '''
     if pd.isna(comments):
         return ''
-    sentences = re.findall(r'([^.!?]*P-TECH[^.!?]*[.!?])', comments, re.IGNORECASE)
-    return sentences[0].strip() if sentences else ''
+    sentences = re.findall(r'([^.!?]*\bonly\b[^.!?]*[.!?])', comments, re.IGNORECASE)
+    if sentences:
+        sentence = sentences[0].strip()
+        cleaned_sentence = re.sub(r'^[,.\s]+', '', sentence)  # Remove leading punctuation or spaces
+        return cleaned_sentence
+    return ''
 
 def extract_meets_with_sections(comments):
+    '''Some sections are cross-listed with different departments '''
     if pd.isna(comments):
         return ''
     meets_with_match = re.search(r'meets with\s*([\w\d\s,-]+)(?=\.)', comments, re.IGNORECASE)
@@ -88,11 +98,18 @@ def extract_meets_with_sections(comments):
     sections = re.split(r'\s*,\s*|\s+and\s+', meets_with_text)
     return ', '.join(section.strip() for section in sections)
 
+def identify_cohorted_sections(df):
+    df['Cohort'] = df['Short_Title'].str.startswith('CH: ').astype(bool)
+    logging.info('Identified cohorted sections')
+    return df
+
 def process_comments(df):
     df['Course_Name'] = df['Name'].apply(extract_course_name)
     df['Corequisite'] = df['Printed_Comments'].apply(extract_corequisites)
-    df['PTECH'] = df['Printed_Comments'].apply(extract_ptech_sentence)
     df['Meets_With'] = df['Printed_Comments'].apply(extract_meets_with_sections)
+    df['Restricted_section'] = df['Printed_Comments'].apply(extract_only_sentence)
+    df = identify_cohorted_sections(df)
+
     logging.info('Extracted information from comments')
     return df
 
@@ -112,7 +129,8 @@ def import_to_sqlite(df, db_name):
         cursor.execute("CREATE INDEX idx_name ON schedule (Name)")
         cursor.execute("CREATE INDEX idx_status ON schedule (Status)")
         cursor.execute("CREATE INDEX idx_avail_seats ON schedule (Avail_Seats)")
-        
+        cursor.execute("CREATE INDEX idx_faculty_last ON schedule (Faculty_Last)")
+
         cursor.execute("PRAGMA table_info(schedule)")
         columns_info = cursor.fetchall()
         for column in columns_info:
