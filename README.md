@@ -7,6 +7,7 @@ This project is a course scheduler that generates valid schedule combinations fo
 - `main.py`: The main script that generates and prints valid schedule combinations.
 - `user_input.py`: Handles user input for course selection and modality preferences.
 - `availability.py`: Handles user input for availability and unavailability times.
+- `generate_db.py`:  Handles generating database from master schedule .csv file.  (Assume that the file will be uploaded once per day.)
 
 ## Setup
 
@@ -18,9 +19,48 @@ This project is a course scheduler that generates valid schedule combinations fo
 ### Database Setup
 
 1. Create an SQLite database named `schedule.db`.
-2. Populate the database with the appropriate schema and data.
+2. Populate the database with the appropriate schema and data using `generate_db.py`.
 
-### Installing Dependencies
+#### Schedule CSV Cleanup and Database Loader
+
+This script cleans up .csv data related to course schedules and loads it into an SQLite database. It is modular and includes improved logging, error handling, and configuration management.
+
+##### Features of generate_db.py
+
+- Clean up column names and data types
+- Handle multiple entries in specific columns
+- Extract specific information from comments
+- Identify sections reserved for cohorted students
+- Save cleaned data to a new CSV file
+- Load data into an SQLite database
+
+##### Requirements of generate_db.py
+
+- Python 3.x
+- pandas
+- sqlite3
+- re
+- logging
+
+##### Installation of generate_db.py
+
+1. Ensure you have Python 3.x installed on your system.
+2. Install the required packages using pip:
+    ```sh
+    pip install pandas
+    ```
+
+##### Usage of generate_db.py
+
+1. Place your schedule CSV file in the same directory as the script.
+2. Update the `file_name` and `db_name` variables in the `main` function to match your CSV file name and desired SQLite database name.
+3. Run the script:
+    ```sh
+    python generate_db.py
+    ```
+
+
+### Installing Dependencies for main.py
 
 There are no external dependencies for this project beyond Python's standard library.
 
