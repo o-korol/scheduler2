@@ -1,5 +1,3 @@
-# similar to main.py in function, but the code itself could be different
-# times different functions to identify the bottleneck
 import sqlite3
 from datetime import datetime
 from itertools import permutations
@@ -11,7 +9,7 @@ def retrieve_section_info(cursor, selected_courses):
     section_columns = []
     for course in selected_courses:
         cursor.execute("""
-            SELECT Name, Avail_Seats, Printed_Comments, Corequisite, PTECH, STime, ETime, SDate, EDate, Mtg_Days, Method, Credits
+            SELECT Name, Avail_Seats, Printed_Comments, Corequisite, STime, ETime, SDate, EDate, Mtg_Days, Method, Credits, Restricted_Section, Cohort
             FROM schedule
             WHERE Course_Name = ? AND Status = 'A' AND Avail_Seats > 0
         """, (course,))
@@ -45,7 +43,7 @@ def process_corequisites(cursor, sections_info, section_columns):
                     for coreq in coreq_list:
                         coreq = coreq.strip()
                         cursor.execute("""
-                            SELECT Name, Avail_Seats, Printed_Comments, Corequisite, PTECH, STime, ETime, SDate, EDate, Mtg_Days, Method
+                            SELECT Name, Avail_Seats, Printed_Comments, Corequisite, STime, ETime, SDate, EDate, Mtg_Days, Method, Restricted_Section, Cohort
                             FROM schedule
                             WHERE Name = ? AND Status = 'A' AND Avail_Seats > 0
                         """, (coreq,))
